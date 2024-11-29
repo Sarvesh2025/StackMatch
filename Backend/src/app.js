@@ -1,7 +1,24 @@
 const express = require('express');
-const  connectDB =require("./config/database");
+const connectDB = require("./config/database");
+const User = require("./models/user");
 const app = express();
 
+
+app.post("/signup", async (req, res) => {
+    const user = new User({
+        firstName: "Sarvesh",
+        age: 20,
+        gender: "Male",
+        githubId: "Sarvesh2025"
+    });
+    try {
+        await user.save();
+        res.send("User data saved successfully");
+    }
+    catch(err) {
+        res.status(400).send("Error saving the user :" + err.message);
+    }
+});
 connectDB().then(() => {
     console.log("Database connection established");
     app.listen(7777, () => {
@@ -19,8 +36,7 @@ connectDB().then(() => {
 
 
 
-//u2bHnPREdFiPTGSm
-//utsavsarveshpandey
 
-//mongodb+srv://utsavsarveshpandey:<u2bHnPREdFiPTGSm>@cluster0.udnzy.mongodb.net/
-//mongodb+srv://utsavsarveshpandey:<u2bHnPREdFiPTGSm>@cluster0.udnzy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+
+
+
