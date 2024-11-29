@@ -1,20 +1,26 @@
 const express = require('express');
+const  connectDB =require("./config/database");
 const app = express();
 
-
-
-app.use("/", (req, res) => {
-    res.send("Hello this is homePage");
-});
-app.use("/test", (req, res) => {
-    res.send("Hello this is testing page");
-});
-
-app.use("/user", (req, res) => {
-    res.send("Hello this is users dashboard");
-});
-
-
-app.listen(7777, () => {
+connectDB().then(() => {
+    console.log("Database connection established");
+    app.listen(7777, () => {
     console.log("Server started at port:7777");
 });
+}).catch(err => {
+    console.log("Database cannot be connected");
+})
+
+
+
+
+
+
+
+
+
+//u2bHnPREdFiPTGSm
+//utsavsarveshpandey
+
+//mongodb+srv://utsavsarveshpandey:<u2bHnPREdFiPTGSm>@cluster0.udnzy.mongodb.net/
+//mongodb+srv://utsavsarveshpandey:<u2bHnPREdFiPTGSm>@cluster0.udnzy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
