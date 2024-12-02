@@ -3,7 +3,7 @@ const connectDB = require("./config/database");
 const User = require("./models/user");
 const app = express();
 app.use(express.json());
-
+//signup
 app.post("/signup", async (req, res) => {
     const user = new User(req.body);
     try {
@@ -14,7 +14,7 @@ app.post("/signup", async (req, res) => {
         res.status(400).send("Error saving the user :" + err.message);
     }
 });
-
+// api for feed 
 app.get("/feed", async (req, res) => {
     try {
         const users = await User.find({});
@@ -31,9 +31,9 @@ app.get("/feed", async (req, res) => {
 });
 
 // find user by emailID
-app.get("/user/:emailId", async (req,res) => {
+app.get("/user", async (req, res) => {
     try {
-        const email = req.params.emailId;
+        const email = req.body.emailId;
         console.log(email);
         const user = await User.find({ emailId: email });
         if (user.length === 0) {
@@ -44,7 +44,46 @@ app.get("/user/:emailId", async (req,res) => {
     catch {
         res.status(400).send("Something went wrong");
     }
-})
+});
+
+// delete user by id 
+app.delete("/delete/:userId", async (req, res) => {
+    const userId = req.body.userId;
+    try {
+        const deletedUser = await User.findByIdAndDelete(userId);
+        if (!deletedUser) {
+            return res.status(404).send("User not found");
+        }
+        else { res.send(deletedUser); }
+    }
+    catch {
+        res.status(400).send("Something wait wrong");
+    }
+});
+
+// update
+
+app.patch("/user", async (req, res) => {
+    const userId = req.body.userId;
+    const data = req.body;
+    try {
+        const user = await User.findByIdAndUpdate({
+            _id: userId
+        }, data, {
+            returnDocument: "after",
+            runValidators: true,
+        });
+        console.log(user);
+        res.send("User updated successfully");
+    }
+    catch (err) {
+        console.log(err);
+        res.status(400).send("Something went wrong "+err.message);
+    }
+});
+  
+
+
 
 connectDB().then(() => {
     console.log("Database connection established");
