@@ -1,9 +1,12 @@
 const express = require('express');
 const connectDB = require("./config/database");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 const bcrypt=require('bcrypt')
 const User = require("./models/user");
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 //signup
 app.post('/signup', async (req, res) => {
     const { firstName, lastName, emailId, githubId, password, skills, about, photoUrl } = req.body;
@@ -27,7 +30,7 @@ app.post('/signup', async (req, res) => {
         res.status(201).send("User registered successfully");
     } catch (error) {
         console.error(error);
-        res.status(500).send("Something went wrong");
+        res.status(400).send("Something went wrong");
     }
 });
 
@@ -41,7 +44,9 @@ app.post('/login', async (req, res) => {
         }
         const isValid = await bcrypt.compare(password, user.password);
         if (isValid) {
-            res.send("Login Successfully");
+            const token = await jwt.sign({ _id: user._id }, "STACK@Match$790");
+            res.cookie("token", token);
+             res.send("Login Successfully");
         }
         else {
             throw new Error("Invalid credentials");
@@ -49,6 +54,31 @@ app.post('/login', async (req, res) => {
     }
     catch (err) {
         res.status(400).send("ERROR :" + err.message);
+    }
+}
+    
+);
+
+// get profile()
+
+app.get("/profile", async (req, res) => {
+    try {
+        const cookies = req.cookies;
+        const { token } = cookies;
+        if (!token) {
+            throw new Error("Invalid Token");
+        }
+
+        const decodedMessage = await jwt.verify(token, "STACK@Match$790");
+        const { _id } = decodedMessage;
+        const user = await User.findById(_id);
+        if (!user) {
+            throw new Error("User does not exist");
+        }
+        res.send(user);
+    }
+    catch(err) {
+        res.status(400).send("ERROR: " + err.message);
     }
 }
 );
@@ -87,7 +117,7 @@ app.get("/user", async (req, res) => {
 
 // delete user by id 
 app.delete("/delete/:userId", async (req, res) => {
-    const userId = req.body.userId;
+    const userId = req.params.userId;
     try {
         const deletedUser = await User.findByIdAndDelete(userId);
         if (!deletedUser) {
