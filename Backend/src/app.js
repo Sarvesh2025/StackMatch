@@ -1,19 +1,58 @@
 const express = require('express');
 const connectDB = require("./config/database");
+const bcrypt=require('bcrypt')
 const User = require("./models/user");
 const app = express();
 app.use(express.json());
 //signup
-app.post("/signup", async (req, res) => {
-    const user = new User(req.body);
-    try {
-        await user.save();
-        res.send("User data saved successfully");
+app.post('/signup', async (req, res) => {
+    const { firstName, lastName, emailId, githubId, password, skills, about, photoUrl } = req.body;
+    if (!firstName || !emailId || !password) {
+        return res.status(400).send("Missing required fields");
     }
-    catch(err) {
-        res.status(400).send("Error saving the user :" + err.message);
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        console.log(hashedPassword);
+        const user = new User({
+            firstName,
+            lastName,
+            emailId,
+            githubId,
+            password: hashedPassword,
+            skills,
+            about,
+            photoUrl
+        });
+        await user.save();
+        res.status(201).send("User registered successfully");
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Something went wrong");
     }
 });
+
+// login 
+app.post('/login', async (req, res) => {
+    try {
+        const { emailId, password } = req.body;
+        const user = await User.findOne({ emailId: emailId });
+        if (!user) {
+            throw new Error("Invalid Credentials");
+        }
+        const isValid = await bcrypt.compare(password, user.password);
+        if (isValid) {
+            res.send("Login Successfully");
+        }
+        else {
+            throw new Error("Invalid credentials");
+        }
+    }
+    catch (err) {
+        res.status(400).send("ERROR :" + err.message);
+    }
+}
+);
+
 // api for feed 
 app.get("/feed", async (req, res) => {
     try {

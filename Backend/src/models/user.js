@@ -76,7 +76,7 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: "This is default about of user",
              validate(value) {
-                 if (value.length>15) {
+                 if (value.length>150) {
                      throw new Error("Not a valid github ID");
                  }
             }
