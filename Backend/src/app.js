@@ -4,6 +4,7 @@ const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const bcrypt=require('bcrypt')
 const User = require("./models/user");
+const { userAuth } = require("./middleware/auth");
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
@@ -42,10 +43,12 @@ app.post('/login', async (req, res) => {
         if (!user) {
             throw new Error("Invalid Credentials");
         }
-        const isValid = await bcrypt.compare(password, user.password);
+        const isValid = await user.validatePassword(password);
         if (isValid) {
-            const token = await jwt.sign({ _id: user._id }, "STACK@Match$790");
-            res.cookie("token", token);
+            const token = await user.getJWT();
+            res.cookie("token", token, {
+                expires: new Date(Date.now() + 8 * 3600000),
+            });
              res.send("Login Successfully");
         }
         else {
@@ -59,22 +62,20 @@ app.post('/login', async (req, res) => {
     
 );
 
+// connection request
+
+app.post("/connection-request", userAuth, async (req, res) => {
+    console.log("Connection request Sent");
+    const user = req.user;
+    res.send(user.firstName + " Sent the connection request");
+
+});
+
 // get profile()
 
-app.get("/profile", async (req, res) => {
+app.get("/profile",userAuth, async (req, res) => {
     try {
-        const cookies = req.cookies;
-        const { token } = cookies;
-        if (!token) {
-            throw new Error("Invalid Token");
-        }
-
-        const decodedMessage = await jwt.verify(token, "STACK@Match$790");
-        const { _id } = decodedMessage;
-        const user = await User.findById(_id);
-        if (!user) {
-            throw new Error("User does not exist");
-        }
+        const user = req.user;
         res.send(user);
     }
     catch(err) {
