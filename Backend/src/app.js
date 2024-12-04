@@ -11,8 +11,8 @@ const { authRouter } = require("./routes/auth")
  const { connectionRouter } = require("./routes/connection");
 
 app.use("/", authRouter);
- app.use("/profile", profileRouter);
- app.use("/connection", connectionRouter);
+app.use("/profile/", profileRouter);
+app.use("/", connectionRouter);
 
 
 connectDB().then(() => {
