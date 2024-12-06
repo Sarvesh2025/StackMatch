@@ -5,18 +5,18 @@ const User = require("../models/user");
 
 const connectionRouter = express.Router();
 
-connectionRouter.post("/send/:statVar/:toUserId", userAuth, async (req, res) => {
+connectionRouter.post("/send/:status/:toUserId", userAuth, async (req, res) => {
     try {
-        const fromUserID = req.user._id;
+        const fromUserId = req.user._id;
         const toUserId = req.params.toUserId;
-        const statVar = req.params.statVar;
-        const allowedstatVar = ["ignored", "interested"];
-        if (allowedstatVar.includes(statVar)) {
-            return res.statVar(400).json({ message: "Invalid statVar type: " + statVar });
+        const status = req.params.status;
+        const allowedstatus = ["ignored", "interested"];
+        if (!allowedstatus.includes(status)) {
+            return res.status(400).json({ message: "Invalid status type: " + status });
         }
         const toUser = await User.findById(toUserId);
         if (!toUser) {
-            return res.statVar(404).json({ message: "No such user exists" });
+            return res.status(404).json({ message: "No such user exists" });
         }
 
         const existingConnectionRequest = await ConnectionRequest.findOne({
@@ -26,19 +26,19 @@ connectionRouter.post("/send/:statVar/:toUserId", userAuth, async (req, res) => 
             ],
         });
         if (existingConnectionRequest) {
-            return res.statVar(400).send({ message: "Connection Request already sent" });
+            return res.status(400).send({ message: "Connection Request already sent" });
         }
    
         const connectionRequest = new ConnectionRequest({
             fromUserId,
             toUserId,
-            statVar,
+            status,
         });
 
         const data = await connectionRequest.save();
 
         res.json({
-            message: req.user.firstName + " is " + statVar + " in "+ toUser.firstName,
+            message: req.user.firstName + " is " + status + " in "+ toUser.firstName,
             data,
         });
     }
@@ -46,5 +46,36 @@ connectionRouter.post("/send/:statVar/:toUserId", userAuth, async (req, res) => 
         res.status(400).send("ERROR: " + err.message);
     }
 });
+
+connectionRouter.post("/review/:status/:requestId", userAuth, async (req, res) => {
+    try {
+        const loggedInUser = req.user;
+        const { status, requestId } = req.params;
+        const allowedstatus = ["accepted", "rejected"];
+
+        if (!allowedstatus.includes(status)) {
+            return res.status(400).json({ message: "Status not allowed" });
+        }
+        const connectionRequest = await ConnectionRequest.findOne({
+            _id: requestId,
+            toUserId: loggedInUser._id,
+            status: "interested"
+        });
+
+        if (!connectionRequest) {
+            return res.status(400).json({ message: "Connection request not found" });
+        }
+        connectionRequest.status=status;
+
+        const data = await connectionRequest.save();
+        res.json({ message: "Connection Request is" + status, data });
+        
+    }
+    catch (err) {
+        res.status(400).send("ERROR: " + err.message);
+    }
+});
+
+
 
 module.exports = { connectionRouter };
