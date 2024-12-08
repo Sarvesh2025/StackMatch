@@ -6,14 +6,13 @@ const { validateEditProfileData } = require("../utils/validation")
 profileRouter.get("/view", userAuth, async (req, res) => {
   try {
     const user = req.user;
-    res.send(user);
+    res.status(200).json({message:"Data fetched successfully",data:user});
   } catch (err) {
     res.status(400).send("ERROR : " + err.message);
       }
-   
 });
 
-profileRouter.patch("/editProfile", userAuth, async (req, res) => {
+profileRouter.patch("/edit", userAuth, async (req, res) => {
 try{if (!validateEditProfileData(req)) {
     throw new Error("Invalid Edit Request");
 }
